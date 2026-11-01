@@ -1,0 +1,20 @@
+# Ambientes Virtuais
+venv/
+.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Matplotlib & Jupyter Checkpoints
+.matplotlib/
+.ipynb_checkpoints/
+
+# Arquivos de Sistema e IDEs
+.vscode/
+.idea/
+Thumbs.db
+[Dd]esktop.ini
+
