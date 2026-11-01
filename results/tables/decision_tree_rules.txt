@@ -1,0 +1,73 @@
+|--- checking_status_A14 <= 0.50
+|   |--- duration <= -0.77
+|   |   |--- property_A121 <= 0.50
+|   |   |   |--- credit_history_A34 <= 0.50
+|   |   |   |   |--- sex_and_marital_status_A92 <= 0.50
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |--- sex_and_marital_status_A92 >  0.50
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |--- credit_history_A34 >  0.50
+|   |   |   |   |--- savings_account_A64 <= 0.50
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- savings_account_A64 >  0.50
+|   |   |   |   |   |--- class: 0
+|   |   |--- property_A121 >  0.50
+|   |   |   |--- sex_and_marital_status_A93 <= 0.50
+|   |   |   |   |--- employment_status_A73 <= 0.50
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- employment_status_A73 >  0.50
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |--- sex_and_marital_status_A93 >  0.50
+|   |   |   |   |--- class: 1
+|   |--- duration >  -0.77
+|   |   |--- duration <= 2.20
+|   |   |   |--- amount <= -0.65
+|   |   |   |   |--- other_debtors_A103 <= 0.50
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |--- other_debtors_A103 >  0.50
+|   |   |   |   |   |--- class: 1
+|   |   |   |--- amount >  -0.65
+|   |   |   |   |--- purpose_A41 <= 0.50
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |--- purpose_A41 >  0.50
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |--- duration >  2.20
+|   |   |   |--- savings_account_A65 <= 0.50
+|   |   |   |   |--- residence_since <= -1.21
+|   |   |   |   |   |--- class: 1
+|   |   |   |   |--- residence_since >  -1.21
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |--- savings_account_A65 >  0.50
+|   |   |   |   |--- class: 1
+|--- checking_status_A14 >  0.50
+|   |--- other_installments_A143 <= 0.50
+|   |   |--- age <= 0.80
+|   |   |   |--- residence_since <= -1.21
+|   |   |   |   |--- class: 1
+|   |   |   |--- residence_since >  -1.21
+|   |   |   |   |--- purpose_A49 <= 0.50
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |--- purpose_A49 >  0.50
+|   |   |   |   |   |--- truncated branch of depth 2
+|   |   |--- age >  0.80
+|   |   |   |--- class: 1
+|   |--- other_installments_A143 >  0.50
+|   |   |--- age <= -0.25
+|   |   |   |--- amount <= 1.18
+|   |   |   |   |--- age <= -1.13
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |--- age >  -1.13
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |--- amount >  1.18
+|   |   |   |   |--- employment_status_A72 <= 0.50
+|   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |--- employment_status_A72 >  0.50
+|   |   |   |   |   |--- class: 0
+|   |   |--- age >  -0.25
+|   |   |   |--- credit_history_A34 <= 0.50
+|   |   |   |   |--- age <= 2.69
+|   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |--- age >  2.69
+|   |   |   |   |   |--- class: 0
+|   |   |   |--- credit_history_A34 >  0.50
+|   |   |   |   |--- class: 1

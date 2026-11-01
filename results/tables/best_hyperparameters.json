@@ -1,0 +1,26 @@
+{
+    "Decision Tree": {
+        "classifier__criterion": "entropy",
+        "classifier__max_depth": 7,
+        "classifier__min_samples_split": 5
+    },
+    "KNN": {
+        "classifier__metric": "manhattan",
+        "classifier__n_neighbors": 5,
+        "classifier__weights": "distance"
+    },
+    "SVM": {
+        "classifier__C": 10,
+        "classifier__gamma": "scale",
+        "classifier__kernel": "rbf"
+    },
+    "Random Forest": {
+        "classifier__max_depth": 15,
+        "classifier__min_samples_split": 5,
+        "classifier__n_estimators": 100
+    },
+    "AdaBoost": {
+        "classifier__learning_rate": 1.0,
+        "classifier__n_estimators": 100
+    }
+}
