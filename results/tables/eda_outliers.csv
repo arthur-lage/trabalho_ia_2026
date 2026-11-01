@@ -1,0 +1,8 @@
+atributo,outliers_IQR,outliers_%,limite_inferior,limite_superior,maximo,assimetria
+duration,70,7.0,-6.0,42.0,72,1.09
+amount,72,7.2,-2544.62,7882.38,18424,1.95
+installment_rate,0,0.0,-1.0,7.0,4,-0.53
+residence_since,0,0.0,-1.0,7.0,4,-0.27
+age,23,2.3,4.5,64.5,75,1.02
+existing_credits_count_curr_bank,6,0.6,-0.5,3.5,4,1.27
+dependent_count,155,15.5,1.0,1.0,2,1.91
