@@ -289,13 +289,26 @@ def random_feasible_sequence(rng: random.Random) -> list[int]:
     return repair_sequence(candidate, rng)
 
 
-def validate_domain() -> dict[str, str]:
-    """Checagens locais exigidas: avaliador, restrição, reparo e caso controlado."""
+def validate_domain() -> dict[str, object]:
+    """Valida sequências controladas, decodificação, objetivo e reparo."""
 
     known = [0, 3, 4, 0, 5, 3, 4, 0]  # I–IV–V–I–vi–IV–V–I
+    controlled = [0, 5, 3, 4, 0, 5, 3, 0]  # I–vi–IV–V–I–vi–IV–I
     invalid = [0] * SEQUENCE_LENGTH
-    if not is_feasible(known):
-        raise AssertionError("A progressão de referência deveria ser viável.")
+    expected_scores = {
+        "C_major": 85.40571428571429,
+        "A_harmonic_minor": 86.57142857142857,
+        "A_natural_minor": 83.77142857142857,
+    }
+    expected = {
+        "C_major": ("C", "F", "G", "C", "A m", "F", "G", "C"),
+        "A_harmonic_minor": ("A m", "D m", "E", "A m", "F", "D m", "E", "A m"),
+        "A_natural_minor": ("A m", "D m", "E m", "A m", "F", "D m", "E m", "A m"),
+    }
+
+    for sequence in (known, controlled):
+        if not is_feasible(sequence):
+            raise AssertionError("A progressão controlada deveria ser viável.")
     if is_feasible(invalid):
         raise AssertionError("A sequência sem dominante deve ser inviável.")
 
@@ -304,23 +317,31 @@ def validate_domain() -> dict[str, str]:
     if not is_feasible(repaired):
         raise AssertionError("O reparador não recuperou uma solução viável.")
 
-    expected = {
-        "C_major": ("C", "F", "G", "C", "A m", "F", "G", "C"),
-        "A_harmonic_minor": ("A m", "D m", "E", "A m", "F", "D m", "E", "A m"),
-        "A_natural_minor": ("A m", "D m", "E m", "A m", "F", "D m", "E m", "A m"),
-    }
     for instance in INSTANCES:
         decoded = decode_sequence(instance, known)
         formatted = tuple(value.replace("m", " m") for value in decoded)
         if formatted != expected[instance.name]:
             raise AssertionError(f"Decodificação incorreta na instância {instance.name}.")
         evaluation = evaluate_sequence(instance, known)
+        if not evaluation.feasible or evaluation.violations:
+            raise AssertionError("A solução conhecida deveria ser viável sem violações.")
+        if abs(evaluation.objective - expected_scores[instance.name]) > 1e-10:
+            raise AssertionError(
+                f"Objetivo incorreto na instância {instance.name}: "
+                f"{evaluation.objective:.12f}."
+            )
         if not 0.0 <= evaluation.objective <= 100.0:
             raise AssertionError("O objetivo saiu do intervalo declarado [0, 100].")
 
+    invalid_evaluation = evaluate_sequence(INSTANCES[0], invalid)
+    if invalid_evaluation.feasible or not invalid_evaluation.violations:
+        raise AssertionError("A avaliação deve informar as violações da sequência inválida.")
+
     return {
-        "known_solution": "viável e decodificada nas três instâncias",
-        "invalid_solution": "detectada pelas restrições musicais",
+        "known_solution": "viável, decodificada e conferida por valor esperado nas três instâncias",
+        "controlled_solution": "segunda progressão fixa avaliada sem alterar o tamanho do problema",
+        "invalid_solution": "inviabilidade e violações detectadas",
         "repair": "converteu a solução inválida em solução viável",
         "objective": "conformidade e diversidade na escala 0–100",
+        "feasibility": "violações relatadas separadamente do objetivo original",
     }
