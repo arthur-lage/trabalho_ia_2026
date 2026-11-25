@@ -18,8 +18,20 @@ case "$COMMAND" in
         python src/supervised/preprocess.py
         python src/supervised/evaluate.py
         ;;
+    optimize)
+        echo "==> Executando experimentos do problema 40..."
+        python -m src.optimization.experiment
+        ;;
+    validate-optimization)
+        echo "==> Validando avaliador, restrições, decodificação e reparo..."
+        python -m src.optimization.experiment --validate-only
+        ;;
+    test)
+        echo "==> Executando testes automatizados do problema 40..."
+        python -m unittest discover -s tests -v
+        ;;
     *)
-        echo "Uso: ./run.sh {preprocess|train|evaluate|all}"
+        echo "Uso: ./run.sh {preprocess|evaluate|all|optimize|validate-optimization|test}"
         exit 1
         ;;
 esac
