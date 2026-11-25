@@ -69,4 +69,7 @@ A base é composta por **20 atributos preditivos** (7 numéricos e 13 categóric
 **Aprendizado Supervisionado — Classificação Binária**.
 
 ## Ausência de Valores Faltantes
-A base de dados original não apresenta valores nulos/ausentes registrados (`Has Missing Values: No`). Ainda assim, o pipeline de pré-processamento incorporará rotinas de validação e imputação preventiva (`SimpleImputer`) para assegurar robustez.
+A base original não registra valores ausentes e a verificação exploratória confirmou zero valores nulos e zero linhas duplicadas. Por isso, o pipeline atual não aplica imputação. O pré-processamento aplica `StandardScaler` às sete variáveis numéricas e `OneHotEncoder(handle_unknown="ignore")` às treze categóricas, sempre dentro do `Pipeline` usado na validação cruzada.
+
+## Referência
+Hofmann, H. (1994). *Statlog (German Credit Data)* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5NC77.
