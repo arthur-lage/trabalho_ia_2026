@@ -10,7 +10,6 @@ from .problem import (
     MusicInstance,
     SearchResult,
     random_feasible_sequence,
-    repair_sequence,
 )
 
 
@@ -59,7 +58,7 @@ def run_genetic(
     population: list[tuple[tuple[int, ...], Evaluation]] = []
 
     for _ in range(min(population_size, evaluation_budget)):
-        candidate = tuple(random_feasible_sequence(rng))
+        candidate = tuple(random_feasible_sequence(rng, tracker))
         population.append((candidate, tracker.evaluate(candidate)))
 
     while tracker.evaluations < evaluation_budget:
@@ -75,7 +74,7 @@ def run_genetic(
             else:
                 child = list(parent_a)
             child = _mutate(child, rng, mutation_rate)
-            child = repair_sequence(child, rng)
+            child = tracker.repair(child, rng)
             evaluated = tracker.evaluate(child)
             next_population.append((tuple(child), evaluated))
 

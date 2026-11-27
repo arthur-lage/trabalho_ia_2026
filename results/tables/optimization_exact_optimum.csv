@@ -1,0 +1,4 @@
+instance,exact_optimum,feasible_solutions,chord_progression
+C_major,90.92571428571429,26970,"[""C"", ""Am"", ""Dm"", ""B°"", ""C"", ""F"", ""G"", ""C""]"
+A_harmonic_minor,88.8457142857143,26970,"[""Am"", ""Dm"", ""E"", ""Am"", ""F"", ""B°"", ""E"", ""Am""]"
+A_natural_minor,89.62285714285714,26970,"[""Am"", ""G"", ""C"", ""F"", ""B°"", ""Dm"", ""Em"", ""Am""]"

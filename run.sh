@@ -26,12 +26,16 @@ case "$COMMAND" in
         echo "==> Validando avaliador, restrições, decodificação e reparo..."
         python -m src.optimization.experiment --validate-only
         ;;
+    report)
+        echo "==> Gerando reports/relatorio.pdf a partir de results/..."
+        python reports/build_report.py
+        ;;
     test)
         echo "==> Executando testes automatizados do problema 40..."
         python -m unittest discover -s tests -v
         ;;
     *)
-        echo "Uso: ./run.sh {preprocess|evaluate|all|optimize|validate-optimization|test}"
+        echo "Uso: ./run.sh {preprocess|evaluate|all|optimize|validate-optimization|report|test}"
         exit 1
         ;;
 esac

@@ -44,6 +44,15 @@ Foi usada a **Statlog (German Credit Data)**, obtida no [UCI Machine Learning Re
 - Modelos: Árvore de Decisão, KNN, SVM, Random Forest e AdaBoost.
 - Seleção pelo F1 macro; resultados de acurácia, precisão macro, revocação macro e ROC-AUC também são registrados.
 
+### Instalação
+
+~~~powershell
+python -m venv .venv
+.venv\Scripts\activate          # Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+pip install jupyter              # apenas para abrir notebooks/eda.ipynb
+~~~
+
 ### Execução
 
 No Windows, a partir da raiz do repositório:
@@ -104,14 +113,42 @@ python -m unittest discover -s tests -v
 
 No Git Bash/WSL, use ./run.sh optimize, ./run.sh validate-optimization e ./run.sh test. Cada método e instância tem dez execuções, sementes 42 a 51 e orçamento de 2.000 avaliações da função objetivo por execução. Uma busca aleatória viável, com o mesmo orçamento, serve como referência. O script registra melhor resultado, média, desvio-padrão, viabilidade, tempo, contagem de avaliações e convergência.
 
-Os resultados da Parte 2 são salvos em results/tables/optimization_runs.csv, optimization_summary.csv, optimization_convergence.csv e optimization_metadata.json, além da figura results/figures/optimization_convergence.png.
+Os resultados da Parte 2 são salvos em results/tables/ (optimization_runs.csv, optimization_summary.csv, optimization_convergence.csv, optimization_exact_optimum.csv, optimization_statistical_tests.csv e optimization_metadata.json) e em results/figures/ (optimization_convergence.png e optimization_boxplot.png).
+
+### Referências de comparação e limitações conhecidas
+
+- **Busca aleatória viável:** referência com o mesmo orçamento.
+- **Ótimo exato:** o espaço tem 7^6 = 117.649 candidatos com os extremos fixos na tônica, dos quais 26.970 são viáveis. A busca exaustiva (`exhaustive_optimum`) fornece o ótimo de cada instância, usado só como referência (não consome o orçamento dos métodos).
+- **Taxa de reparo:** como todo candidato passa pelo reparo, a viabilidade final é 100%. A coluna `repair_needed_percent` informa a fração de candidatos que estavam inviáveis antes do reparo.
+- **Teste estatístico:** Mann-Whitney bilateral entre pares de métodos, por instância.
+- **Limitações:** o problema é pequeno (o orçamento cobre no máximo 7,4% do espaço viável) e o ACO usa a tabela de preferências do objetivo como heurística, o que provavelmente o favorece. Ambos são discutidos no relatório.
+
+### Proposta técnica (problema 40)
+
+- **Número e nome:** 40 — Geração de escalas musicais ou progressões de acordes sob regras.
+- **Instâncias:** Dó maior, Lá menor harmônica e Lá menor natural.
+- **Variáveis:** 8 graus de escala, cada um em {0, …, 6}.
+- **Função objetivo:** maximizar 100 × (0,80 × conformidade + 0,20 × diversidade), descrita na seção Formulação.
+- **Restrições:** extremos na tônica, dominante no interior, ao menos 3 graus distintos e sem repetição adjacente.
+- **Representação e operadores:** vetor de graus; cruzamento de um ponto e mutação por gene (AG), construção por feromônio e preferência (ACO), clonagem e hipermutação adaptativa (CLONALG); reparo comum aos três.
 
 ## Relatório e reprodução
 
-O relatório técnico está em reports/relatorio.pdf. Para recriá-lo depois de regenerar as tabelas e figuras:
+O relatório técnico está em reports/relatorio.pdf. Ele lê os números de results/, então, depois de reexecutar os experimentos (por exemplo, na sua máquina, para registrar o hardware e os tempos reais), recrie-o com:
 
 ~~~powershell
 python reports/build_report.py
+~~~
+
+No Git Bash/WSL: ./run.sh report.
+
+### Entrega
+
+Ao finalizar, crie a tag da versão entregue e envie ao repositório público:
+
+~~~powershell
+git tag v1.0-submissao
+git push origin v1.0-submissao
 ~~~
 
 Instale as dependências listadas em requirements.txt em um ambiente Python 3.10 ou superior. O projeto usa caminhos relativos à raiz do repositório.

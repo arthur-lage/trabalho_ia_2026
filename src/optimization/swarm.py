@@ -12,7 +12,6 @@ from .problem import (
     EvaluationBudget,
     MusicInstance,
     SearchResult,
-    repair_sequence,
 )
 
 
@@ -31,6 +30,7 @@ def _weighted_choice(weights: list[float], rng: random.Random) -> int:
 
 def _construct_ant(
     instance: MusicInstance,
+    tracker: EvaluationBudget,
     pheromone: list[list[float]],
     rng: random.Random,
     alpha: float,
@@ -52,7 +52,7 @@ def _construct_ant(
             weights.append(pheromone_weight * max(0.03, heuristic) ** beta)
         sequence.append(choices[_weighted_choice(weights, rng)])
     sequence.append(0)
-    return repair_sequence(sequence, rng)
+    return tracker.repair(sequence, rng)
 
 
 def run_aco(
@@ -80,7 +80,7 @@ def run_aco(
         batch: list[tuple[tuple[int, ...], float]] = []
         batch_size = min(ants_per_update, evaluation_budget - tracker.evaluations)
         for _ in range(batch_size):
-            candidate = tuple(_construct_ant(instance, pheromone, rng, alpha, beta))
+            candidate = tuple(_construct_ant(instance, tracker, pheromone, rng, alpha, beta))
             result = tracker.evaluate(candidate)
             batch.append((candidate, result.objective))
 

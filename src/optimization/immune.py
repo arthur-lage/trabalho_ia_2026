@@ -10,11 +10,12 @@ from .problem import (
     MusicInstance,
     SearchResult,
     random_feasible_sequence,
-    repair_sequence,
 )
 
 
-def _mutate_clone(sequence: tuple[int, ...], rng: random.Random, rate: float) -> list[int]:
+def _mutate_clone(
+    sequence: tuple[int, ...], rng: random.Random, rate: float, tracker: EvaluationBudget
+) -> list[int]:
     clone = list(sequence)
     changed_positions: list[int] = []
     for index in range(1, len(clone) - 1):
@@ -25,7 +26,7 @@ def _mutate_clone(sequence: tuple[int, ...], rng: random.Random, rate: float) ->
     for index in changed_positions:
         alternatives = [degree for degree in range(7) if degree != clone[index]]
         clone[index] = rng.choice(alternatives)
-    return repair_sequence(clone, rng)
+    return tracker.repair(clone, rng)
 
 
 def run_clonalg(
@@ -48,7 +49,7 @@ def run_clonalg(
     tracker = EvaluationBudget(instance, evaluation_budget)
     population: list[tuple[tuple[int, ...], Evaluation]] = []
     for _ in range(min(population_size, evaluation_budget)):
-        candidate = tuple(random_feasible_sequence(rng))
+        candidate = tuple(random_feasible_sequence(rng, tracker))
         population.append((candidate, tracker.evaluate(candidate)))
 
     while tracker.evaluations < evaluation_budget:
@@ -63,7 +64,7 @@ def run_clonalg(
             affinity = max(0.0, min(1.0, evaluation.objective / 100.0))
             mutation_rate = 0.05 + 0.45 * (1.0 - affinity)
             for _ in range(clone_count):
-                planned_clones.append(_mutate_clone(antibody, rng, mutation_rate))
+                planned_clones.append(_mutate_clone(antibody, rng, mutation_rate, tracker))
 
         new_population = list(selected)
         clone_index = 0
@@ -76,7 +77,7 @@ def run_clonalg(
         # Introduz diversidade por anticorpos aleatórios a cada rodada clonal.
         immigrant_count = min(random_replacements, evaluation_budget - tracker.evaluations)
         for _ in range(immigrant_count):
-            candidate = tuple(random_feasible_sequence(rng))
+            candidate = tuple(random_feasible_sequence(rng, tracker))
             new_population.append((candidate, tracker.evaluate(candidate)))
 
         new_population.sort(key=lambda item: item[1].objective, reverse=True)

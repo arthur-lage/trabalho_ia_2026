@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import itertools
 from numbers import Integral
 import random
 from typing import Sequence
@@ -119,6 +120,8 @@ class SearchResult:
     best_evaluation: Evaluation
     evaluations: int
     convergence: tuple[tuple[int, float], ...]
+    repair_calls: int = 0
+    repairs_needed: int = 0
 
 
 class EvaluationBudget:
@@ -133,6 +136,21 @@ class EvaluationBudget:
         self.best_sequence: tuple[int, ...] | None = None
         self.best_evaluation: Evaluation | None = None
         self.convergence: list[tuple[int, float]] = []
+        self.repair_calls = 0
+        self.repairs_needed = 0
+
+    def repair(self, sequence: Sequence[int], rng: random.Random) -> list[int]:
+        """Repara a sequência e registra se o candidato bruto era inviável.
+
+        O reparo não consome avaliações; a contagem serve para informar quanto
+        da viabilidade final vem do operador de reparo e não do método em si.
+        """
+
+        raw = [int(value) % CHORD_DEGREES for value in sequence]
+        self.repair_calls += 1
+        if not is_feasible(raw):
+            self.repairs_needed += 1
+        return repair_sequence(sequence, rng)
 
     def evaluate(self, sequence: Sequence[int]) -> Evaluation:
         if self.evaluations >= self.limit:
@@ -156,6 +174,8 @@ class EvaluationBudget:
             self.best_evaluation,
             self.evaluations,
             tuple(self.convergence),
+            self.repair_calls,
+            self.repairs_needed,
         )
 
 
@@ -284,9 +304,34 @@ def repair_sequence(sequence: Sequence[int], rng: random.Random) -> list[int]:
     return repaired
 
 
-def random_feasible_sequence(rng: random.Random) -> list[int]:
+def random_feasible_sequence(
+    rng: random.Random, tracker: "EvaluationBudget | None" = None
+) -> list[int]:
     candidate = [0] + [rng.randrange(CHORD_DEGREES) for _ in range(SEQUENCE_LENGTH - 2)] + [0]
+    if tracker is not None:
+        return tracker.repair(candidate, rng)
     return repair_sequence(candidate, rng)
+
+
+def exhaustive_optimum(instance: MusicInstance) -> tuple[float, tuple[int, ...], int]:
+    """Enumera todo o espaço (7^6 candidatos com extremos na tônica).
+
+    Retorna (melhor objetivo, uma progressão ótima, número de progressões viáveis).
+    Serve como referência exata; não é usada pelos otimizadores nem consome o
+    orçamento deles.
+    """
+
+    best_value = float("-inf")
+    best_sequence: tuple[int, ...] = ()
+    feasible_count = 0
+    for middle in itertools.product(range(CHORD_DEGREES), repeat=SEQUENCE_LENGTH - 2):
+        sequence = (0, *middle, 0)
+        evaluation = evaluate_sequence(instance, sequence)
+        if evaluation.feasible:
+            feasible_count += 1
+            if evaluation.objective > best_value:
+                best_value, best_sequence = evaluation.objective, sequence
+    return best_value, best_sequence, feasible_count
 
 
 def validate_domain() -> dict[str, object]:

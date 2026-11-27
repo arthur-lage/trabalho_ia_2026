@@ -16,6 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.stats import mannwhitneyu
 
 from .genetic import run_genetic
 from .immune import run_clonalg
@@ -25,6 +26,7 @@ from .problem import (
     MusicInstance,
     SearchResult,
     decode_sequence,
+    exhaustive_optimum,
     random_feasible_sequence,
     validate_domain,
 )
@@ -43,7 +45,7 @@ def _run_random_search(
     rng = random.Random(seed)
     tracker = EvaluationBudget(instance, evaluation_budget)
     while tracker.evaluations < evaluation_budget:
-        tracker.evaluate(random_feasible_sequence(rng))
+        tracker.evaluate(random_feasible_sequence(rng, tracker))
     return tracker.result()
 
 
@@ -61,10 +63,11 @@ def _run_method(
     raise ValueError(f"Algoritmo desconhecido: {algorithm}")
 
 
-def _summarize(runs: pd.DataFrame) -> pd.DataFrame:
+def _summarize(runs: pd.DataFrame, optimum: dict[str, float]) -> pd.DataFrame:
     records: list[dict[str, object]] = []
     for (instance, algorithm), group in runs.groupby(["instance", "algorithm"], sort=False):
         scores = group["objective"]
+        best_known = optimum[instance]
         records.append(
             {
                 "instance": instance,
@@ -72,8 +75,16 @@ def _summarize(runs: pd.DataFrame) -> pd.DataFrame:
                 "best_objective": float(scores.max()),
                 "mean_objective": float(scores.mean()),
                 "std_objective": float(scores.std(ddof=1)) if len(scores) > 1 else 0.0,
+                "median_objective": float(scores.median()),
+                "iqr_objective": float(scores.quantile(0.75) - scores.quantile(0.25)),
+                "exact_optimum": best_known,
+                "mean_gap_to_optimum": float(best_known - scores.mean()),
+                "runs_at_optimum": int((scores >= best_known - 1e-9).sum()),
                 "feasible_runs": int(group["feasible"].sum()),
                 "feasibility_rate_percent": float(100.0 * group["feasible"].mean()),
+                "repair_needed_percent": float(
+                    100.0 * group["repairs_needed"].sum() / group["repair_calls"].sum()
+                ),
                 "mean_runtime_seconds": float(group["runtime_seconds"].mean()),
                 "std_runtime_seconds": float(group["runtime_seconds"].std(ddof=1))
                 if len(group) > 1
@@ -81,6 +92,32 @@ def _summarize(runs: pd.DataFrame) -> pd.DataFrame:
                 "mean_objective_evaluations": float(group["objective_evaluations"].mean()),
             }
         )
+    return pd.DataFrame.from_records(records)
+
+
+def _statistical_tests(runs: pd.DataFrame) -> pd.DataFrame:
+    """Mann-Whitney bilateral entre pares de métodos, por instância (n=10 vs n=10)."""
+
+    records: list[dict[str, object]] = []
+    for instance in runs["instance"].unique():
+        subset = runs[runs["instance"] == instance]
+        for index, first in enumerate(ALGORITHM_NAMES):
+            for second in ALGORITHM_NAMES[index + 1 :]:
+                a = subset[subset["algorithm"] == first]["objective"].to_numpy()
+                b = subset[subset["algorithm"] == second]["objective"].to_numpy()
+                statistic, p_value = mannwhitneyu(a, b, alternative="two-sided")
+                records.append(
+                    {
+                        "instance": instance,
+                        "method_a": first,
+                        "method_b": second,
+                        "mean_a": float(a.mean()),
+                        "mean_b": float(b.mean()),
+                        "u_statistic": float(statistic),
+                        "p_value": float(p_value),
+                        "significant_at_0_05": bool(p_value < 0.05),
+                    }
+                )
     return pd.DataFrame.from_records(records)
 
 
@@ -92,13 +129,15 @@ def _aggregate_curves(
     for (instance, algorithm), runs in histories.items():
         values = np.asarray([[score for _, score in run] for run in runs], dtype=float)
         means = values.mean(axis=0)
-        for evaluation, mean_score in enumerate(means, start=1):
+        stds = values.std(axis=0, ddof=1)
+        for evaluation, (mean_score, std_score) in enumerate(zip(means, stds), start=1):
             records.append(
                 {
                     "instance": instance,
                     "algorithm": algorithm,
                     "objective_evaluations": evaluation,
                     "mean_best_objective": float(mean_score),
+                    "std_best_objective": float(std_score),
                 }
             )
         if len(means) != budget:
@@ -106,7 +145,9 @@ def _aggregate_curves(
     return pd.DataFrame.from_records(records)
 
 
-def _plot_convergence(curves: pd.DataFrame, output_path: Path) -> None:
+def _plot_convergence(
+    curves: pd.DataFrame, output_path: Path, optimum: dict[str, float] | None = None
+) -> None:
     fig, axes = plt.subplots(
         len(INSTANCES), 1, figsize=(11, 14), sharex=True, sharey=True, constrained_layout=True
     )
@@ -122,12 +163,47 @@ def _plot_convergence(curves: pd.DataFrame, output_path: Path) -> None:
                 color=colors[algorithm],
                 linewidth=1.8,
             )
+            axis.fill_between(
+                method["objective_evaluations"],
+                method["mean_best_objective"] - method["std_best_objective"],
+                method["mean_best_objective"] + method["std_best_objective"],
+                color=colors[algorithm],
+                alpha=0.12,
+            )
+        if optimum is not None:
+            axis.axhline(
+                optimum[instance.name], color="#dc2626", linestyle="--", linewidth=1.2,
+                label="Ótimo exato (busca exaustiva)",
+            )
         axis.set_title(instance.name.replace("_", " "))
         axis.set_ylabel("Melhor objetivo médio (0–100)")
         axis.grid(alpha=0.25)
         axis.legend(loc="lower right", ncol=2)
     axes[-1].set_xlabel("Avaliações da função objetivo")
-    fig.suptitle("Convergência média por orçamento de avaliações", fontsize=14, fontweight="bold")
+    fig.suptitle(
+        "Convergência média (faixa = ±1 desvio-padrão, 10 execuções)",
+        fontsize=14,
+        fontweight="bold",
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=180)
+    plt.close(fig)
+
+
+def _plot_boxplot(runs: pd.DataFrame, optimum: dict[str, float], output_path: Path) -> None:
+    fig, axes = plt.subplots(1, len(INSTANCES), figsize=(14, 4.8), sharey=False, constrained_layout=True)
+    for axis, instance in zip(axes, INSTANCES):
+        subset = runs[runs["instance"] == instance.name]
+        data = [subset[subset["algorithm"] == name]["objective"].to_numpy() for name in ALGORITHM_NAMES]
+        axis.boxplot(data, tick_labels=ALGORITHM_NAMES, showmeans=True)
+        axis.axhline(optimum[instance.name], color="#dc2626", linestyle="--", linewidth=1.2)
+        axis.set_title(instance.name.replace("_", " "))
+        axis.set_ylabel("Objetivo final (0–100)")
+        axis.tick_params(axis="x", rotation=25)
+        axis.grid(alpha=0.25, axis="y")
+    fig.suptitle(
+        "Objetivo final por método (linha tracejada = ótimo exato)", fontsize=13, fontweight="bold"
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=180)
     plt.close(fig)
@@ -153,6 +229,16 @@ def run_experiments(
     figures_dir.mkdir(parents=True, exist_ok=True)
 
     validation = validate_domain()
+    exact: dict[str, dict[str, object]] = {}
+    for instance in INSTANCES:
+        value, sequence, feasible_count = exhaustive_optimum(instance)
+        exact[instance.name] = {
+            "objective": value,
+            "degree_sequence": list(sequence),
+            "chord_progression": decode_sequence(instance, sequence),
+            "feasible_solutions": feasible_count,
+        }
+    optimum = {name: float(info["objective"]) for name, info in exact.items()}
     run_records: list[dict[str, object]] = []
     histories: dict[tuple[str, str], list[tuple[tuple[int, float], ...]]] = {}
 
@@ -186,6 +272,9 @@ def run_experiments(
                         "feasible": result.best_evaluation.feasible,
                         "objective_evaluations": result.evaluations,
                         "runtime_seconds": runtime,
+                        "repair_calls": result.repair_calls,
+                        "repairs_needed": result.repairs_needed,
+                        "gap_to_optimum": optimum[instance.name] - result.best_evaluation.objective,
                         "degree_sequence": json.dumps(result.best_sequence),
                         "chord_progression": json.dumps(
                             decode_sequence(instance, result.best_sequence), ensure_ascii=False
@@ -199,13 +288,27 @@ def run_experiments(
                 )
 
     runs_frame = pd.DataFrame.from_records(run_records)
-    summary_frame = _summarize(runs_frame)
+    summary_frame = _summarize(runs_frame, optimum)
+    tests_frame = _statistical_tests(runs_frame)
     curves_frame = _aggregate_curves(histories, evaluation_budget)
 
     runs_frame.to_csv(tables_dir / "optimization_runs.csv", index=False)
     summary_frame.to_csv(tables_dir / "optimization_summary.csv", index=False)
     curves_frame.to_csv(tables_dir / "optimization_convergence.csv", index=False)
-    _plot_convergence(curves_frame, figures_dir / "optimization_convergence.png")
+    tests_frame.to_csv(tables_dir / "optimization_statistical_tests.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                "instance": name,
+                "exact_optimum": info["objective"],
+                "feasible_solutions": info["feasible_solutions"],
+                "chord_progression": json.dumps(info["chord_progression"], ensure_ascii=False),
+            }
+            for name, info in exact.items()
+        ]
+    ).to_csv(tables_dir / "optimization_exact_optimum.csv", index=False)
+    _plot_convergence(curves_frame, figures_dir / "optimization_convergence.png", optimum)
+    _plot_boxplot(runs_frame, optimum, figures_dir / "optimization_boxplot.png")
 
     metadata = {
         "problem": 40,
@@ -239,8 +342,12 @@ def run_experiments(
             },
         },
         "reference": "busca aleatória de soluções viáveis com o mesmo orçamento",
+        "exact_reference": "busca exaustiva do espaço com extremos na tônica (7^6 candidatos)",
+        "exact_optimum": exact,
+        "statistical_test": "Mann-Whitney U bilateral, 10 vs 10 execuções, por instância",
         "validation_checks": validation,
         "environment": {
+            "scipy": __import__("scipy").__version__,
             "python": sys.version.split()[0],
             "platform": platform.platform(),
             "processor": platform.processor() or "não informado pelo sistema",

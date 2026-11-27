@@ -36,25 +36,25 @@ A base é composta por **20 atributos preditivos** (7 numéricos e 13 categóric
 1. **`checking_status` (Attribute 1):** Situação da conta corrente existente (`A11`: < 0 DM, `A12`: 0 <= x < 200 DM, `A13`: >= 200 DM / conta salário há pelo menos 1 ano, `A14`: sem conta corrente).
 2. **`credit_history` (Attribute 3):** Histórico de crédito (`A30`: nenhum crédito tomado / todos pagos em dia, `A31`: todos os créditos pagos em dia neste banco, `A32`: créditos existentes em dia até o momento, `A33`: atrasos de pagamento no passado, `A34`: conta crítica / outros créditos em outros bancos).
 3. **`purpose` (Attribute 4):** Finalidade do empréstimo (`A40`: carro novo, `A41`: carro usado, `A42`: móveis/equipamentos, `A43`: rádio/TV, `A44`: eletrodomésticos, `A45`: reparos, `A46`: educação, `A48`: capacitação/retreinamento, `A49`: negócios, `A410`: outros).
-4. **`savings_status` (Attribute 6):** Poupança e títulos de investimento (`A61`: < 100 DM, `A62`: 100 <= x < 500 DM, `A63`: 500 <= x < 1000 DM, `A64`: >= 1000 DM, `A65`: desconhecido / sem poupança).
-5. **`employment` (Attribute 7):** Tempo no emprego atual (`A71`: desempregado, `A72`: < 1 ano, `A73`: 1 <= x < 4 anos, `A74`: 4 <= x < 7 anos, `A75`: >= 7 anos).
-6. **`personal_status` (Attribute 9):** Estado civil e sexo (`A91`: homem divorciado/separado, `A92`: mulher divorciada/separada/casada, `A93`: homem solteiro, `A94`: homem casado/viúvo, `A95`: mulher solteira).
-7. **`other_parties` (Attribute 10):** Outros devedores / fiadores (`A101`: nenhum, `A102`: co-requerente, `A103`: fiador).
-8. **`property_magnitude` (Attribute 12):** Bens patrimoniais (`A121`: imóvel próprio, `A122`: consórcio imobiliário / seguro de vida, `A123`: veículo próprio ou outros, `A124`: desconhecido / sem bens).
-9. **`other_payment_plans` (Attribute 14):** Outros planos de financiamento em andamento (`A141`: outros bancos, `A142`: lojas comerciais, `A143`: nenhum).
+4. **`savings_account` (Attribute 6):** Poupança e títulos de investimento (`A61`: < 100 DM, `A62`: 100 <= x < 500 DM, `A63`: 500 <= x < 1000 DM, `A64`: >= 1000 DM, `A65`: desconhecido / sem poupança).
+5. **`employment_status` (Attribute 7):** Tempo no emprego atual (`A71`: desempregado, `A72`: < 1 ano, `A73`: 1 <= x < 4 anos, `A74`: 4 <= x < 7 anos, `A75`: >= 7 anos).
+6. **`sex_and_marital_status` (Attribute 9):** Estado civil e sexo (`A91`: homem divorciado/separado, `A92`: mulher divorciada/separada/casada, `A93`: homem solteiro, `A94`: homem casado/viúvo, `A95`: mulher solteira).
+7. **`other_debtors` (Attribute 10):** Outros devedores / fiadores (`A101`: nenhum, `A102`: co-requerente, `A103`: fiador).
+8. **`property` (Attribute 12):** Bens patrimoniais (`A121`: imóvel próprio, `A122`: consórcio imobiliário / seguro de vida, `A123`: veículo próprio ou outros, `A124`: desconhecido / sem bens).
+9. **`other_installments` (Attribute 14):** Outros planos de financiamento em andamento (`A141`: outros bancos, `A142`: lojas comerciais, `A143`: nenhum).
 10. **`housing` (Attribute 15):** Situação de moradia (`A151`: alugada, `A152`: própria, `A153`: gratuita / de favor).
 11. **`job` (Attribute 17):** Tipo de ocupação (`A171`: desempregado / não qualificado não-residente, `A172`: não qualificado residente, `A173`: empregado qualificado / funcionário público, `A174`: gerência / autônomo / altamente qualificado).
-12. **`own_telephone` (Attribute 19):** Possui telefone cadastrado no nome (`A191`: não, `A192`: sim).
+12. **`telephone` (Attribute 19):** Possui telefone cadastrado no nome (`A191`: não, `A192`: sim).
 13. **`foreign_worker` (Attribute 20):** Trabalhador estrangeiro (`A201`: sim, `A202`: não).
 
 ### Atributos Numéricos (7)
 14. **`duration` (Attribute 2):** Duração do empréstimo em meses.
-15. **`credit_amount` (Attribute 5):** Valor solicitado do crédito (em Marcos Alemães - DM).
-16. **`installment_commitment` (Attribute 8):** Taxa das parcelas em porcentagem da renda disponível do cliente (1% a 4%).
+15. **`amount` (Attribute 5):** Valor solicitado do crédito (em Marcos Alemães - DM).
+16. **`installment_rate` (Attribute 8):** Taxa das parcelas em porcentagem da renda disponível do cliente (1% a 4%).
 17. **`residence_since` (Attribute 11):** Tempo de permanência na residência atual (em anos).
 18. **`age` (Attribute 13):** Idade do proponente (em anos).
-19. **`existing_credits` (Attribute 16):** Quantidade de empréstimos ativos existentes neste banco.
-20. **`num_dependents` (Attribute 18):** Número de dependentes financeiros sob responsabilidade do cliente.
+19. **`existing_credits_count_curr_bank` (Attribute 16):** Quantidade de empréstimos ativos existentes neste banco.
+20. **`dependent_count` (Attribute 18):** Número de dependentes financeiros sob responsabilidade do cliente.
 
 ## Variável Alvo
 - **Nome original:** `class` (ou `credit_risk`)
